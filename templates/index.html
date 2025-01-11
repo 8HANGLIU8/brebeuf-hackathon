@@ -1,0 +1,77 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Gatekeeper</title>
+    <script>
+        async function sendMessage() {
+            const userInput = document.getElementById('user_input').value;
+
+            // Send user input to the backend
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `user_input=${encodeURIComponent(userInput)}`,
+            });
+
+            const data = await response.json();
+
+            // Display response
+            const chatBox = document.getElementById('chatbox');
+            chatBox.innerHTML += `<p><b>You:</b> ${userInput}</p>`;
+            chatBox.innerHTML += `<p><b>Gatekeeper:</b> ${data.response}</p>`;
+            document.getElementById('user_input').value = '';
+        }
+    </script>
+</head>
+<body>
+    <h1>Chat with Gatekeeper</h1>
+    <div id="chatbox" style="border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll;"></div>
+    <input type="text" id="user_input" placeholder="Type your question" style="width: 80%;">
+    <button onclick="sendMessage()">Send</button>
+</body>
+</html>
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Mentor</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="../templates/index.css">
+
+</head>
+<body>
+    <h1 class="title">Ask the Mentor</h1>
+    <form id="chat-form">
+        <label for="user-input">Enter your question:</label>
+        <input type="text" id="user-input" name="user_input" required>
+        <button type="submit">Send</button>
+    </form>
+    <div id="response">
+        <h2>Response:</h2>
+        <p id="chat-response"></p>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#chat-form').submit(function (e) {
+                e.preventDefault();
+                const userInput = $('#user-input').val();
+
+                $.post('/chat', { user_input: userInput }, function (data) {
+                    $('#chat-response').text(data.response);
+                }).fail(function (xhr, status, error) {
+                    $('#chat-response').text(`Error: ${xhr.responseText || status}`);
+                });
+            });
+        });
+
+    </script>
+</body>
+</html>

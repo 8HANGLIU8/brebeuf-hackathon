@@ -1,6 +1,8 @@
 from openai import OpenAI
+import os
 
-client = OpenAI(api_key='API_KEY')
+client = OpenAI(api_key=os.environ['API_KEY'])
+
 import os
 
 
@@ -26,8 +28,13 @@ def get_response(messages):
 
 def main():
     # Prefixed prompt to guide ChatGPT
-    prefixed_prompt = '''If question seems to be asking for definition
+    prefixed_prompt = '''
+Improve the quality of a student's questions asked below using these conditions:
+If question seems to be asking for definition
 Then answer with definition
+
+If question seems to be subjective 
+ask if user wants to send their message to the mentor. send if they say yes.
 
 If question seem to consist of multiple questions
 Then split the questions and ask user for specific questions that wants to be asked
@@ -48,9 +55,12 @@ If question is in FAQ section
 Then give the answer directly from FAQ
 
 Else user is eligible to ask this question to mentor
-Let user know that their question was sent to the mentor
+Let user know that their question is well formulated and is sent to the mentor
 
-at the end suggeest a better way to formulate the question
+if question sent to mentor
+do not suggest a better way to formulate the question
+
+at the end suggeest a better way to formulate the question and ask if the user wants to send the question anyway to their mentor
 
 The question is: 
 '''
@@ -68,7 +78,7 @@ The question is:
 
         # Check if the user wants to quit
         if user_input.lower() == 'q':
-            print("ChatGPT: Goodbye!")
+            print("Gatekeeper: Goodbye!")
             break
 
         # Add the user's input to the conversation
@@ -78,7 +88,7 @@ The question is:
         response = get_response(messages)
 
         # Output ChatGPT's response
-        print(f"ChatGPT: {response}")
+        print(f"Gatekeeper: {response}")
 
         # Add the assistant's response to the conversation history
         messages.append({"role": "assistant", "content": response})
