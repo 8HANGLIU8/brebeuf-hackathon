@@ -1,42 +1,55 @@
-// Get references to the DOM elements
-const chatBox = document.getElementById('chat-box');
-const userInput = document.getElementById('user-input');
-const sendBtn = document.getElementById('send-btn');
+import openai from './config/open-ai.js';
+import readlineSync from 'readline-sync';
+import colors from 'colors';
 
-// Bot's simple response logic
-const botResponses = {
-    hello: "Hi there! How can I assist you today?",
-    help: "I'm here to help! Try asking me anything.",
-    bye: "Goodbye! Have a great day!",
-};
+async function main() {
+  console.log(colors.bold.green('Welcome to the Chatbot Program!'));
+  console.log(colors.bold.green('You can start chatting with the bot.'));
 
-// Add a message to the chat
-function addMessage(text, sender) {
-    const message = document.createElement('div');
-    message.classList.add('message', sender);
-    message.textContent = text;
-    chatBox.appendChild(message);
-    chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the latest message
+  const chatHistory = []; // Store conversation history
+
+  while (true) {
+    const userInput = readlineSync.question(colors.yellow('You: '));
+
+    try {
+      // Construct messages by iterating over the history
+      const messages = chatHistory.map(([role, content]) => ({
+        role,
+        content,
+      }));
+
+      // Add latest user input
+      messages.push({ role: 'user', content: userInput });
+
+      // Call the API with user input & history
+      const completion = await openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: messages,
+      });
+
+      // Get completion text/content
+      const completionText = completion.data.choices[0].message.content;
+
+      if (userInput.toLowerCase() === 'exit') {
+        console.log(colors.green('Bot: ') + completionText);
+        return;
+      }
+
+      console.log(colors.green('Bot: ') + completionText);
+
+      // Update history with user input and assistant response
+      chatHistory.push(['user', userInput]);
+      chatHistory.push(['assistant', completionText]);
+    } catch (error) {
+      if (error.response) {
+        console.error(colors.red(error.response.data.error.code));
+        console.error(colors.red(error.response.data.error.message));
+        return;
+      }
+      console.error(colors.red(error));
+      return;
+    }
+  }
 }
 
-// Handle user input
-function handleUserMessage() {
-    const userText = userInput.value.trim();
-    if (userText === "") return;
-
-    // Add user's message
-    addMessage(userText, 'user');
-
-    // Generate bot response
-    const botText = botResponses[userText.toLowerCase()] || "I'm not sure how to respond to that.";
-    setTimeout(() => addMessage(botText, 'bot'), 500);
-
-    // Clear input
-    userInput.value = '';
-}
-
-// Event listeners
-sendBtn.addEventListener('click', handleUserMessage);
-userInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') handleUserMessage();
-});
+main();
