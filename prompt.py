@@ -1,44 +1,89 @@
-import openai
+from openai import OpenAI
 
-# Set your OpenAI API key
-API_KEY = "your_api_key_here"
+client = OpenAI(api_key='your_api_key')
+import os
 
-def chat_with_gpt(initial_prompt, user_question):
+
+def get_response(messages):
     """
-    Send an initial prompt and a user's question to ChatGPT.
+    Sends the message history to ChatGPT and gets a response.
     
-    :param initial_prompt: The initial system-level prompt for GPT.
-    :param user_question: The question from the user to add to the conversation.
-    :return: The response from ChatGPT.
+    :param messages: List of messages including the conversation history and prefixed prompt.
+    :return: ChatGPT's response.
     """
-    # Combine the initial prompt with the user's question
-    messages = [
-        {"role": "system", "content": initial_prompt},
-        {"role": "user", "content": user_question},
-    ]
-    
-    # Call the OpenAI API
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Use your preferred GPT model
+        # Call the OpenAI API to generate a chat completion
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # Corrected model name
             messages=messages
         )
-        return response["choices"][0]["message"]["content"]
+
+        # Extract the response content
+        return response.choices[0].message.content
     except Exception as e:
         return f"Error: {e}"
 
+
 def main():
-    print("Welcome to ChatGPT Assistant!")
-    
-    # Get the initial prompt and user's question
-    initial_prompt = input("Enter the initial prompt for ChatGPT: ")
-    user_question = input("Enter your question for ChatGPT: ")
-    
-    # Get the response
-    response = chat_with_gpt(initial_prompt, user_question)
-    
-    print("\nChatGPT's Response:")
-    print(response)
+    # Prefixed prompt to guide ChatGPT
+    prefixed_prompt = '''If question seems to be asking for definition
+Then answer with definition
+
+If question seem to consist of multiple questions
+Then split the questions and ask user for specific questions that wants to be asked
+
+If the question consists of multiple parts, 
+then ask a context specific question to the user for them to specify what they want to know
+
+If question is too broad, general, or too philosophic
+Then ask for specifications about the subject 
+
+If question is objective, easily answered, non opinionated
+Then reformulate the question to reword it to fit the mentor
+
+If question is non specific for a mentor of their specific job, non job experience related
+Then discard question, question should not be asked
+
+If question is in FAQ section
+Then give the answer directly from FAQ
+
+Else user is eligible to ask this question to mentor
+Let user know that their question was sent to the mentor
+
+at the end suggeest a better way to formulate the question
+
+The question is: 
+'''
+
+    # Initialize the conversation history with the prefixed prompt
+    messages = [
+        {"role": "system", "content": prefixed_prompt}
+    ]
+
+    print("Gatekeeper: Hello! I will perfect your question for the best feedback possible. Type 'q' to quit.")
+
+    while True:
+        # Get user input
+        user_input = input("You: ")
+
+        # Check if the user wants to quit
+        if user_input.lower() == 'q':
+            print("ChatGPT: Goodbye!")
+            break
+
+        # Add the user's input to the conversation
+        messages.append({"role": "user", "content": user_input})
+
+        # Get the response from ChatGPT
+        response = get_response(messages)
+
+        # Output ChatGPT's response
+        print(f"ChatGPT: {response}")
+
+        # Add the assistant's response to the conversation history
+        messages.append({"role": "assistant", "content": response})
+
 
 if __name__ == "__main__":
     main()
+
